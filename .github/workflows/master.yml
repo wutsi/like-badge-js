@@ -1,0 +1,25 @@
+name: pull_request
+
+on: [ pull_request ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15.8
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@wutsi'
+      - name: Setup
+        run: |
+          npm install uglify-js
+      - name: Build
+        run: |
+          npm run build-js publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -11,6 +11,6 @@
   },
   "scripts": {
     "test": "echo no-test",
-    "build-js": "mkdir -p dist/js && uglifyjs src/js/*.js -m -o dist/js/wutsi-like-badge.js"
+    "build": "mkdir -p dist/js && uglifyjs src/js/*.js -m -o dist/js/wutsi-like-badge.js"
   }
 }
