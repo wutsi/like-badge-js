@@ -18,4 +18,4 @@ jobs:
           npm install uglify-js
       - name: Build
         run: |
-          npm run build-js
+          npm run build
