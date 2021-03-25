@@ -6,25 +6,13 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:11
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: like
-        ports:
-          - 5432:5432
 
     steps:
-      - uses: actions/checkout@v1
-      - name: JDK
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
+      - uses: actions/checkout@v2
+      - name: Node
+          uses: actions/setup-node@v1
+          with:
+            node-version: 15.8
       - name: Build
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        run: |
-          mvn -q -s settings.xml install
-
+          run: |
+            npm run build-js
