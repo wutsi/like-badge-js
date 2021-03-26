@@ -86,6 +86,7 @@ class WutsiLike {
 }
 
 class WutsiLikeStore {
+    // baseUrl = 'https://wutsi-test-like-service.herokuapp.com/v1/likes';
     baseUrl = 'http://localhost:8080/v1/likes';
 
     stats(url) {
@@ -113,9 +114,9 @@ class WutsiLikeStore {
     }
 
     unlike(id) {
-        return fetch(this._to_url('/' + id, {
-            method: 'DELETE'
-        }));
+        return fetch(this._to_url('/' + id), {
+            method: 'DELETE',
+        });
     }
 
     search(url, user_id, device_uuid) {
