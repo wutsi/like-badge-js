@@ -86,8 +86,9 @@ class WutsiLike {
 }
 
 class WutsiLikeStore {
-    // baseUrl = 'https://wutsi-test-like-service.herokuapp.com/v1/likes';
-    baseUrl = 'http://localhost:8080/v1/likes';
+    baseUrl = 'https://wutsi-test-like-service.herokuapp.com/v1/likes';
+
+    // baseUrl = 'http://localhost:8080/v1/likes';
 
     stats(url) {
         const xurl = this._to_url('/stats?canonical_url=' + url);
