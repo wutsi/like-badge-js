@@ -19,11 +19,8 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@wutsi'
       - name: Setup
-        run: |
-          npm install uglify-js
-      - name: Build
-        run: |
-          npm run build
-          npm publish
+        run: npm install uglify-js
+      - run: npm run build
+      - run npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
