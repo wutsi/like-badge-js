@@ -16,8 +16,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 15.8
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@wutsi'
+          registry-url: 'https://registry.npmjs.org'
       - name: Setup
         run: |
           npm install uglify-js
