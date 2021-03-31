@@ -1,105 +1,148 @@
-class WutsiLike {
+class WutsiLike extends HTMLElement {
     config = {
+        environment: 'test',
         device_uuid_cookie: '__w_duaid',
         user_id: null
     };
 
-    constructor(root, like_store, cookie_store) {
-        this.like_store = like_store ? like_store : new WutsiLikeStore();
-        this.cookie_store = cookie_store ? cookie_store : new CookieStore();
+    constructor(root, store) {
+        super()
 
-        const likes = (root ? root : document).querySelectorAll("[role='wutsi-like-badge']");
-        if (likes) {
-            const me = this;
-            likes.forEach(function (like) {
-                me._render(like);
-                me._update_count(like);
-                me._update_liked(like);
-                like.addEventListener("click", function () {
-                    me.on_click(like)
-                })
-            });
-        }
+        this.store = store ? store : new WutsiLikeStore(this.config.environment);
+
+        this.addEventListener("click", e => {
+            this.onClick()
+        });
     }
 
-    on_click(like) {
-        const url = like.getAttribute("data-url");
-        const id = like.getAttribute("data-like-id");
-
-        if (id)
-            this.on_unlike(like, id)
-        else if (url)
-            this.on_like(like, url)
+    connectedCallback() {
+        this.innerHTML = '\
+        <div style="padding: 0.5em 0; cursor: pointer">\
+            <i class="icon far fa-heart"></i>\
+            <span class="count"></span>\
+        </div>\
+        ';
+        this.updateCount();
     }
 
-    on_like(like, url) {
-        const me = this;
-        const user_id = this.config.user_id;
-        const device_uuid = this.cookie_store.get(this.config.device_uuid_cookie);
 
-        this.like_store.like(url, user_id, device_uuid)
+    updateCount() {
+        this.loading = true;
+        this.store.stats(this.url, this.userId, this.deviceUUID)
             .then(data => {
-                like.setAttribute('data-like-id', data.likeId)
-                me._update_count(like);
+                console.log(this.url, data);
+                this.count = data.count
+                this.liked = data.liked
+            })
+            .finally(() => {
+                this.loading = false;
             });
     }
 
-    on_unlike(like, id) {
-        const me = this;
-        this.like_store.unlike(id)
-            .then(response => {
-                like.removeAttribute('data-like-id')
-                me._update_count(like);
-            });
-    }
+    onClick() {
+        if (this.processing)
+            return;
 
-    _render(like) {
-        like.innerHTML = '<div style="padding: 0.5em 0; cursor: pointer">' +
-            '<i class="far fa-heart" style="font-size: 1.5em"></i>' +
-            '<span class="count" style="font-size: 1.5em; margin-left: .5em"></span>' +
-            '</div>';
-    }
-
-    _update_count(like) {
-        const url = like.getAttribute("data-url");
-        this.like_store.stats(url)
+        this.processing = true;
+        this.store.like(this.url, this.userId, this.deviceUUID)
             .then(data => {
-                if (data.count > 0)
-                    like.querySelector(".count").textContent = data.count;
-                else
-                    like.querySelector(".count").textContent = '';
+                this.updateCount();
+            })
+            .finally(() => {
+                this.processing = false;
             });
     }
 
-    _update_liked(like) {
-        const url = like.getAttribute("data-url");
-        const device_uuid = this.cookie_store.get(this.config.device_uuid_cookie);
-        const user_id = this.config.user_id;
 
-        this.like_store.search(url, user_id, device_uuid)
-            .then(data => {
-                if (data.likes.length > 0) {
-                    like.setAttribute("data-like-id", data.likes[0].id);
-                }
-            });
+    // Properties....
+    get processing() {
+        this.classList.contains('processing');
+    }
+
+    set processing(val) {
+        if (val)
+            this.classList.add('processing');
+        else
+            this.classList.remove('processing');
+    }
+
+    get loading() {
+        this.classList.contains('loading');
+    }
+
+    set loading(val) {
+        if (val)
+            this.classList.add('loading');
+        else
+            this.classList.remove('loading');
+    }
+
+    get url() {
+        return this.getAttribute("data-url");
+    }
+
+    get userId() {
+        return this.config.user_id;
+    }
+
+    get deviceUUID() {
+        return this._get_cookie(this.config.device_uuid_cookie);
+    }
+
+    get count() {
+        return this.querySelector(".count").textContent
+    }
+
+    set count(val) {
+        if (val > 0)
+            this.querySelector(".count").textContent = val;
+        else
+            this.querySelector(".count").textContent = '';
+    }
+
+    get liked() {
+        return this.classList.contains('liked');
+    }
+
+    set liked(val) {
+        if (val)
+            this.classList.add('liked')
+        else
+            this.classList.remove('liked')
+    }
+
+    _get_cookie(name) {
+        var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? match[2] : null;
     }
 }
 
 class WutsiLikeStore {
-    baseUrl = 'https://wutsi-test-like-service.herokuapp.com/v1/likes';
+    baseUrl = 'https://wutsi-like-service-test.herokuapp.com/v1/likes';
 
-    // baseUrl = 'http://localhost:8080/v1/likes';
+    constructor(environment) {
+        if (environment == 'prod')
+            this.baseUrl = 'https://wutsi-like-service-prod.herokuapp.com/v1/likes';
+        else if (environment == 'local')
+            this.baseUrl = 'http://localhost:8080/v1/likes';
+    }
 
-    stats(url) {
-        const xurl = this._to_url('/stats?canonical_url=' + url);
-        console.log('stats', xurl);
-        return fetch(xurl)
+    stats(canonical_url, user_id, device_uuid) {
+        var url = this._to_url('/stats?canonical_url=' + canonical_url);
+        if (device_uuid) {
+            url += '&device_uuid=' + device_uuid;
+        }
+        if (user_id) {
+            url += '&user_id=' + user_id;
+        }
+
+        return fetch(url)
             .then(response => response.json());
     }
 
-    like(url, user_id, device_uuid) {
+    like(canonical_url, user_id, device_uuid) {
         const body = {
-            canonicalUrl: url,
+            canonicalUrl: canonical_url,
             deviceUUID: device_uuid,
             userId: user_id
         };
@@ -114,35 +157,9 @@ class WutsiLikeStore {
             .then(response => response.json())
     }
 
-    unlike(id) {
-        return fetch(this._to_url('/' + id), {
-            method: 'DELETE',
-        });
-    }
-
-    search(url, user_id, device_uuid) {
-        var url = '?canonical_url=' + url + '&limit=1';
-        if (device_uuid) {
-            url += '&device_uuid=' + device_uuid;
-        }
-        if (user_id) {
-            url += '&user_id=' + user_id;
-        }
-
-        return fetch(this._to_url(url))
-            .then(response => response.json())
-    }
-
     _to_url(path) {
         return path ? this.baseUrl + path : this.baseUrl;
     }
 }
 
-class CookieStore {
-    get(name) {
-        var match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-        return match ? match[2] : null;
-    }
-}
-
-new WutsiLike(document);
+window.customElements.define('wutsi-like', WutsiLike);

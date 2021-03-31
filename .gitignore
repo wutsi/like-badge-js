@@ -31,3 +31,4 @@ target/
 **/*.dump
 application.pid
 application.port
+package-lock.json

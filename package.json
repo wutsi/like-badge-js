@@ -1,7 +1,7 @@
 {
   "name": "@wutsi/like-badge",
-  "description": "Display the like button with the number of likes",
-  "version": "0.0.1",
+  "description": "Like badge widget that can be embed on any web page",
+  "version": "0.0.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/wutsi/like-badge-js.git"
