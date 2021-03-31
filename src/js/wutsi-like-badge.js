@@ -9,22 +9,35 @@ class WutsiLike extends HTMLElement {
         super()
 
         this.store = store ? store : new WutsiLikeStore(this.config.environment);
-
-        this.addEventListener("click", e => {
-            this.onClick()
-        });
     }
 
     connectedCallback() {
         this.innerHTML = '\
-        <div style="padding: 0.5em 0; cursor: pointer">\
+        <style>\
+          .hyperlink{\
+            cursor: pointer;\
+          }\
+          .liked {\
+            color: darkred;\
+          }\
+          .liked .far{\
+            font-weight: bold;\
+          }\
+        </style>\
+        <div>\
             <i class="icon far fa-heart"></i>\
             <span class="count"></span>\
         </div>\
         ';
+        if (this.hyperlink) {
+            this.classList.add('hyperlink');
+        }
+        this.addEventListener("click", e => {
+            this.onClick()
+        });
+
         this.updateCount();
     }
-
 
     updateCount() {
         this.loading = true;
@@ -78,7 +91,7 @@ class WutsiLike extends HTMLElement {
     }
 
     get url() {
-        return this.getAttribute("data-url");
+        return this.getAttribute("url");
     }
 
     get userId() {
@@ -109,6 +122,10 @@ class WutsiLike extends HTMLElement {
             this.classList.add('liked')
         else
             this.classList.remove('liked')
+    }
+
+    get hyperlink() {
+        return this.getAttribute('hyperlink') == 'true'
     }
 
     _get_cookie(name) {
